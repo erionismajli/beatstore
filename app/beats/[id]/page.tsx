@@ -4,24 +4,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BeatPlayer } from "@/components/beat-player"
 import RelatedBeats from "@/components/related-beats"
 import { Download, ShoppingCart } from "lucide-react"
+import clientPromise from "@/lib/mongodb"
+import { ObjectId } from "mongodb"
+import { notFound } from "next/navigation"
 
-// Mock data for a single beat with Drake-inspired R&B vibe
-const beat = {
-  id: "1",
-  title: "Midnight Feelings",
-  description:
-    "A smooth R&B beat with atmospheric pads and emotional piano melodies. Perfect for Drake-style introspective tracks about relationships and late-night thoughts.",
-  genre: "R&B",
-  bpm: 68,
-  key: "C Minor",
-  price: 49.99,
-  image: "/placeholder.svg?height=600&width=600",
-  audioUrl: "#",
-  dateCreated: "2023-10-15",
-  tags: ["rnb", "drake", "emotional", "toronto"],
+async function getBeat(id: string) {
+  try {
+    const client = await clientPromise
+    const db = client.db("beatstore")
+    const beat = await db.collection("beats").findOne({ _id: new ObjectId(id) })
+    return beat
+  } catch (error) {
+    console.error("Failed to fetch beat:", error)
+    return null
+  }
 }
 
-export default function BeatPage({ params }: { params: { id: string } }) {
+export default async function BeatPage({ params }: { params: { id: string } }) {
+  const beat = await getBeat(params.id)
+
+  if (!beat) {
+    notFound()
+  }
+
   return (
     <div className="container px-4 md:px-6 py-16">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -37,7 +42,7 @@ export default function BeatPage({ params }: { params: { id: string } }) {
           <h1 className="text-3xl md:text-4xl font-heading mb-2">{beat.title}</h1>
 
           <div className="flex flex-wrap gap-2 mb-6">
-            {beat.tags.map((tag) => (
+            {beat.tags?.map((tag) => (
               <span
                 key={tag}
                 className="bg-black border border-zinc-800 text-zinc-300 px-3 py-1 rounded-none text-xs uppercase tracking-wider"
@@ -62,7 +67,7 @@ export default function BeatPage({ params }: { params: { id: string } }) {
             </div>
             <div className="bg-card p-4 border border-zinc-800">
               <p className="text-zinc-400 text-xs uppercase tracking-wider mb-1">Date</p>
-              <p className="font-medium">{beat.dateCreated}</p>
+              <p className="font-medium">{new Date(beat.createdAt).toLocaleDateString()}</p>
             </div>
           </div>
 
@@ -75,9 +80,9 @@ export default function BeatPage({ params }: { params: { id: string } }) {
                 <SelectValue placeholder="Choose a license" />
               </SelectTrigger>
               <SelectContent className="bg-black border-zinc-800">
-                <SelectItem value="basic">Basic License - $29.99</SelectItem>
-                <SelectItem value="premium">Premium License - $49.99</SelectItem>
-                <SelectItem value="exclusive">Exclusive License - $299.99</SelectItem>
+                <SelectItem value="basic">Basic License - ${beat.pricing.basic}</SelectItem>
+                <SelectItem value="premium">Premium License - ${beat.pricing.premium}</SelectItem>
+                <SelectItem value="exclusive">Exclusive License - ${beat.pricing.exclusive}</SelectItem>
               </SelectContent>
             </Select>
 

@@ -3,7 +3,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BeatPlayer } from "@/components/beat-player"
 import RelatedBeats from "@/components/related-beats"
-import { Download, ShoppingCart } from "lucide-react"
+import { DownloadButton } from "@/components/download-button"
+import { ShoppingCart } from "lucide-react"
 import clientPromise from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 import { notFound } from "next/navigation"
@@ -90,12 +91,7 @@ export default async function BeatPage({ params }: { params: { id: string } }) {
               <Button className="flex-1 rounded-none">
                 <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
               </Button>
-              <Button
-                variant="outline"
-                className="flex-1 rounded-none border-zinc-800 hover:bg-white/5 hover:border-primary"
-              >
-                <Download className="mr-2 h-4 w-4" /> Download Demo
-              </Button>
+              <DownloadButton beatId={params.id} />
             </div>
           </div>
         </div>

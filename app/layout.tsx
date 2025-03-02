@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Montserrat, Inter } from "next/font/google"
+import { Toaster } from 'sonner'
 import "./globals.css"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
@@ -39,6 +40,7 @@ export default function RootLayout({
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+        <Toaster theme="dark" position="bottom-right" />
       </body>
     </html>
   )

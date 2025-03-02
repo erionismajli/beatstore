@@ -1,7 +1,15 @@
 import { NextResponse } from 'next/server'
-import { writeFile } from 'fs/promises'
+import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import clientPromise from '@/lib/mongodb'
+
+async function ensureDirectoryExists(path: string) {
+  try {
+    await mkdir(path, { recursive: true })
+  } catch (error) {
+    // Directory might already exist, that's fine
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -23,12 +31,18 @@ export async function POST(request: Request) {
     const audioFileName = `${Date.now()}-${audioFile.name}`
     const imageFileName = `${Date.now()}-${imageFile.name}`
 
+    // Ensure upload directories exist
+    const audioDir = join(process.cwd(), 'public', 'uploads', 'audio')
+    const imageDir = join(process.cwd(), 'public', 'uploads', 'images')
+    await ensureDirectoryExists(audioDir)
+    await ensureDirectoryExists(imageDir)
+
     // Save files to public directory
     const audioBytes = await audioFile.arrayBuffer()
     const imageBytes = await imageFile.arrayBuffer()
 
-    const audioPath = join(process.cwd(), 'public', 'uploads', 'audio', audioFileName)
-    const imagePath = join(process.cwd(), 'public', 'uploads', 'images', imageFileName)
+    const audioPath = join(audioDir, audioFileName)
+    const imagePath = join(imageDir, imageFileName)
 
     await writeFile(audioPath, Buffer.from(audioBytes))
     await writeFile(imagePath, Buffer.from(imageBytes))

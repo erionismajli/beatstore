@@ -1,52 +1,40 @@
 import Link from "next/link"
 import { BeatCard } from "@/components/beat-card"
 import { Button } from "@/components/ui/button"
+import clientPromise from "@/lib/mongodb"
 
-// Mock data for featured beats with Drake-inspired R&B vibe
-const featuredBeats = [
-  {
-    id: "1",
-    title: "Midnight Feelings",
-    genre: "R&B",
-    bpm: 68,
-    price: 49.99,
-    image: "/placeholder.svg?height=400&width=400",
-    audioUrl: "#",
-  },
-  {
-    id: "2",
-    title: "6 Side",
-    genre: "R&B/Trap",
-    bpm: 72,
-    price: 59.99,
-    image: "/placeholder.svg?height=400&width=400",
-    audioUrl: "#",
-  },
-  {
-    id: "3",
-    title: "Late Night Text",
-    genre: "R&B",
-    bpm: 65,
-    price: 49.99,
-    image: "/placeholder.svg?height=400&width=400",
-    audioUrl: "#",
-  },
-  {
-    id: "4",
-    title: "Marvin's Room Type",
-    genre: "R&B",
-    bpm: 70,
-    price: 54.99,
-    image: "/placeholder.svg?height=400&width=400",
-    audioUrl: "#",
-  },
-]
+async function getLatestBeats() {
+  try {
+    const client = await clientPromise
+    const db = client.db("beatstore")
+    const beats = await db.collection("beats")
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(4)
+      .toArray()
 
-export default function FeaturedBeats() {
+    return beats.map(beat => ({
+      id: beat._id.toString(),
+      title: beat.title,
+      genre: beat.genre,
+      bpm: beat.bpm,
+      price: beat.pricing.basic,
+      image: beat.image,
+      audioUrl: beat.audioUrl,
+    }))
+  } catch (error) {
+    console.error("Failed to fetch latest beats:", error)
+    return []
+  }
+}
+
+export default async function FeaturedBeats() {
+  const latestBeats = await getLatestBeats()
+
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-        {featuredBeats.map((beat) => (
+        {latestBeats.map((beat) => (
           <BeatCard key={beat.id} beat={beat} />
         ))}
       </div>

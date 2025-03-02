@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Play, Pause, Volume2, Volume1, VolumeX } from "lucide-react"
+import { Play, Pause } from "lucide-react"
 
 interface BeatPlayerProps {
   audioUrl: string
@@ -11,119 +11,105 @@ interface BeatPlayerProps {
 
 export function BeatPlayer({ audioUrl }: BeatPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
-  const [volume, setVolume] = useState([0.8])
-  
+  const [duration, setDuration] = useState(0)
+  const [error, setError] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  
+
   useEffect(() => {
+    console.log('Loading audio from:', audioUrl)
     const audio = new Audio(audioUrl)
     audioRef.current = audio
-    
+
     audio.addEventListener('loadedmetadata', () => {
       setDuration(audio.duration)
     })
-    
+
     audio.addEventListener('timeupdate', () => {
       setCurrentTime(audio.currentTime)
     })
-    
+
     audio.addEventListener('ended', () => {
       setIsPlaying(false)
       setCurrentTime(0)
     })
-    
-    return () => {\
-      audio.pause()  () => 
-      setIsPlaying(false)
-      setCurrentTime(0))
-    
+
+    audio.addEventListener('error', (e) => {
+      console.error('Audio error:', e)
+      console.log('Failed to load audio from:', audioUrl)
+      setError('Failed to load audio file')
+    })
+
     return () => {
       audio.pause()
-      audio.src = ""
+      audio.currentTime = 0
+      audio.remove()
     }
   }, [audioUrl])
-  
-  useEffect(() => 
-    if (audioRef.current) {
-      audioRef.current.volume = volume[0]
-    }, [volume])
-  
+
   const togglePlay = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause()
-      } else {
-        audioRef.current.play()
-      }
-      setIsPlaying(!isPlaying)
+    if (!audioRef.current) return
+
+    if (isPlaying) {
+      audioRef.current.pause()
+    } else {
+      console.log('Playing audio from:', audioUrl)
+      audioRef.current.play().catch(err => {
+        console.error('Playback error:', err)
+        setError('Failed to play audio')
+      })
     }
+    setIsPlaying(!isPlaying)
   }
-  
-  const handleTimeChange = (value: number[]) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = value[0]
-      setCurrentTime(value[0])
-    }
+
+  const handleSliderChange = (value: number[]) => {
+    if (!audioRef.current) return
+    const newTime = value[0]
+    audioRef.current.currentTime = newTime
+    setCurrentTime(newTime)
   }
-  
+
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60)
     const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
-  
-  const VolumeIcon = () => {
-    if (volume[0] === 0) return <VolumeX className="h-4 w-4" />
-    if (volume[0] < 0.5) return <Volume1 className="h-4 w-4" />
-    return <Volume2 className="h-4 w-4" />
-  }
-  
+
   return (
-    <div className="audio-player">
-      <div className="waveform-container mb-4 bg-zinc-800 rounded">
-        {/* Waveform visualization would go here */}
-        <div className="h-full w-full bg-gradient-to-r from-zinc-800 to-primary/30 rounded" />
-      </div>
-      
-      <div className="flex items-center gap-4 mb-2">
-        <Button 
-          variant="secondary" 
-          size="icon" 
-          className="rounded-full bg-black hover:bg-primary"
+    <div className="bg-card border border-zinc-800 p-4 rounded-lg">
+      <div className="flex items-center gap-4">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90"
           onClick={togglePlay}
         >
           {isPlaying ? (
             <Pause className="h-4 w-4" />
           ) : (
-            <Play className="h-4 w-4" />
+            <Play className="h-4 w-4 ml-0.5" />
           )}
         </Button>
-        
-        <div className="text-sm text-zinc-400">
-          {formatTime(currentTime)} / {formatTime(duration)}
-        </div>
-        
-        <div className="flex items-center gap-2 ml-auto">
-          <VolumeIcon />
+
+        <div className="flex-1 space-y-1">
           <Slider
-            value={volume}
-            max={1}
-            step={0.01}
-            onValueChange={setVolume}
-            className="w-24"
+            value={[currentTime]}
+            max={duration}
+            step={0.1}
+            onValueChange={handleSliderChange}
+            className="w-full"
           />
+          <div className="flex justify-between text-xs text-zinc-400">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
         </div>
       </div>
-      
-      <Slider
-        value={[currentTime]}
-        max={duration || 100}
-        step={0.01}
-        onValueChange={(value) => handleTimeChange(value)}
-        className="bg-zinc-800"
-      />
+      {error && (
+        <div className="mt-2 text-red-500 text-sm">
+          {error}
+        </div>
+      )}
     </div>
   )
 }

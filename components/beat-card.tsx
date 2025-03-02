@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -24,11 +23,44 @@ interface BeatCardProps {
 
 export function BeatCard({ beat }: BeatCardProps) {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    const audio = new Audio(beat.audioUrl)
+    audioRef.current = audio
+
+    audio.addEventListener('error', (e) => {
+      console.error('Audio error:', e)
+      console.log('Attempted to load audio from:', beat.audioUrl)
+      setError('Failed to load audio')
+    })
+
+    audio.addEventListener('ended', () => {
+      setIsPlaying(false)
+    })
+
+    return () => {
+      audio.pause()
+      audio.currentTime = 0
+      audio.remove()
+    }
+  }, [beat.audioUrl])
 
   const togglePlay = (e: React.MouseEvent) => {
     e.preventDefault()
+    if (!audioRef.current) return
+
+    if (isPlaying) {
+      audioRef.current.pause()
+    } else {
+      console.log('Playing audio from:', beat.audioUrl)
+      audioRef.current.play().catch(err => {
+        console.error('Playback error:', err)
+        setError('Failed to play audio')
+      })
+    }
     setIsPlaying(!isPlaying)
-    // Audio playback logic would go here
   }
 
   return (
@@ -44,6 +76,11 @@ export function BeatCard({ beat }: BeatCardProps) {
           >
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
+          {error && (
+            <div className="absolute bottom-12 right-3 bg-red-500/90 text-white text-xs px-2 py-1 rounded">
+              {error}
+            </div>
+          )}
         </div>
         <CardContent className="p-4">
           <div className="flex justify-between items-start mb-2">

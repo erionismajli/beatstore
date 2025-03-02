@@ -147,7 +147,7 @@ export default async function BeatPage({ params }: { params: { id: string } }) {
       {/* Related Beats */}
       <div className="mt-20">
         <h2 className="text-2xl md:text-3xl font-heading mb-8">Similar Vibes</h2>
-        <RelatedBeats />
+        <RelatedBeats currentBeatId={params.id} genre={beat.genre} />
       </div>
     </div>
   )

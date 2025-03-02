@@ -2,66 +2,23 @@ import { BeatCard } from "@/components/beat-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import clientPromise from "@/lib/mongodb"
 
-// Mock data for beats
-const beats = [
-  {
-    id: "1",
-    title: "Midnight Dreams",
-    genre: "Trap",
-    bpm: 140,
-    price: 49.99,
-    image: "/placeholder.svg?height=400&width=400",
-    audioUrl: "#",
-  },
-  {
-    id: "2",
-    title: "Summer Vibes",
-    genre: "R&B",
-    bpm: 95,
-    price: 39.99,
-    image: "/placeholder.svg?height=400&width=400",
-    audioUrl: "#",
-  },
-  {
-    id: "3",
-    title: "Urban Flow",
-    genre: "Hip Hop",
-    bpm: 90,
-    price: 59.99,
-    image: "/placeholder.svg?height=400&width=400",
-    audioUrl: "#",
-  },
-  {
-    id: "4",
-    title: "Electric Soul",
-    genre: "Pop",
-    bpm: 120,
-    price: 44.99,
-    image: "/placeholder.svg?height=400&width=400",
-    audioUrl: "#",
-  },
-  {
-    id: "5",
-    title: "Dark Matter",
-    genre: "Drill",
-    bpm: 145,
-    price: 49.99,
-    image: "/placeholder.svg?height=400&width=400",
-    audioUrl: "#",
-  },
-  {
-    id: "6",
-    title: "Chill Wave",
-    genre: "Lo-Fi",
-    bpm: 85,
-    price: 34.99,
-    image: "/placeholder.svg?height=400&width=400",
-    audioUrl: "#",
-  },
-]
+async function getBeats() {
+  try {
+    const client = await clientPromise
+    const db = client.db("beatstore")
+    const beats = await db.collection("beats").find({}).toArray()
+    return beats
+  } catch (error) {
+    console.error("Failed to fetch beats:", error)
+    return []
+  }
+}
 
-export default function BeatsPage() {
+export default async function BeatsPage() {
+  const beats = await getBeats()
+
   return (
     <div className="container px-4 md:px-6 py-12">
       <h1 className="text-4xl font-bold mb-8">Beat Catalog</h1>
@@ -115,7 +72,18 @@ export default function BeatsPage() {
       {/* Beat Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {beats.map((beat) => (
-          <BeatCard key={beat.id} beat={beat} />
+          <BeatCard 
+            key={beat._id.toString()} 
+            beat={{
+              id: beat._id.toString(),
+              title: beat.title,
+              genre: beat.genre,
+              bpm: beat.bpm,
+              price: beat.pricing.basic,
+              image: beat.image,
+              audioUrl: beat.audioUrl,
+            }} 
+          />
         ))}
       </div>
 

@@ -8,7 +8,8 @@ async function getRelatedBeats(currentBeatId: string, genre: string) {
     const beats = await db.collection("beats")
       .find({
         _id: { $ne: currentBeatId },
-        genre: genre
+        genre: genre,
+        isDeleted: { $ne: 1 }
       })
       .limit(3)
       .toArray()

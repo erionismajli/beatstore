@@ -8,7 +8,9 @@ async function getBeats() {
   try {
     const client = await clientPromise
     const db = client.db("beatstore")
-    const beats = await db.collection("beats").find({}).toArray()
+    const beats = await db.collection("beats")
+      .find({ isDeleted: { $ne: 1 } })
+      .toArray()
     return beats
   } catch (error) {
     console.error("Failed to fetch beats:", error)

@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BeatPlayer } from "@/components/beat-player"
 import RelatedBeats from "@/components/related-beats"
 import { DownloadButton } from "@/components/download-button"
+import { DeleteButton } from "@/components/delete-button"
 import { ShoppingCart } from "lucide-react"
 import clientPromise from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
@@ -13,7 +14,10 @@ async function getBeat(id: string) {
   try {
     const client = await clientPromise
     const db = client.db("beatstore")
-    const beat = await db.collection("beats").findOne({ _id: new ObjectId(id) })
+    const beat = await db.collection("beats").findOne({ 
+      _id: new ObjectId(id),
+      isDeleted: { $ne: 1 }
+    })
     return beat
   } catch (error) {
     console.error("Failed to fetch beat:", error)
@@ -42,15 +46,18 @@ export default async function BeatPage({ params }: { params: { id: string } }) {
         <div className="lg:col-span-2">
           <h1 className="text-3xl md:text-4xl font-heading mb-2">{beat.title}</h1>
 
-          <div className="flex flex-wrap gap-2 mb-6">
-            {beat.tags?.map((tag) => (
-              <span
-                key={tag}
-                className="bg-black border border-zinc-800 text-zinc-300 px-3 py-1 rounded-none text-xs uppercase tracking-wider"
-              >
-                #{tag}
-              </span>
-            ))}
+          <div className="flex justify-between items-start mb-6">
+            <div className="flex flex-wrap gap-2">
+              {beat.tags?.map((tag) => (
+                <span
+                  key={tag}
+                  className="bg-black border border-zinc-800 text-zinc-300 px-3 py-1 rounded-none text-xs uppercase tracking-wider"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+            <DeleteButton beatId={params.id} />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

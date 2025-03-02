@@ -11,7 +11,10 @@ export async function GET(
   try {
     const client = await clientPromise
     const db = client.db('beatstore')
-    const beat = await db.collection('beats').findOne({ _id: new ObjectId(params.id) })
+    const beat = await db.collection('beats').findOne({ 
+      _id: new ObjectId(params.id),
+      isDeleted: { $ne: 1 } // Only return non-deleted beats
+    })
 
     if (!beat) {
       return NextResponse.json({ error: 'Beat not found' }, { status: 404 })
@@ -54,7 +57,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/beats/[id] - Delete a beat
+// DELETE /api/beats/[id] - Soft delete a beat
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
@@ -62,9 +65,17 @@ export async function DELETE(
   try {
     const client = await clientPromise
     const db = client.db('beatstore')
-    const result = await db.collection('beats').deleteOne({ _id: new ObjectId(params.id) })
+    const result = await db.collection('beats').updateOne(
+      { _id: new ObjectId(params.id) },
+      { 
+        $set: { 
+          isDeleted: 1,
+          updatedAt: new Date()
+        } 
+      }
+    )
 
-    if (result.deletedCount === 0) {
+    if (result.matchedCount === 0) {
       return NextResponse.json({ error: 'Beat not found' }, { status: 404 })
     }
 

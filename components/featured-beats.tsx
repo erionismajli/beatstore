@@ -8,7 +8,7 @@ async function getLatestBeats() {
     const client = await clientPromise
     const db = client.db("beatstore")
     const beats = await db.collection("beats")
-      .find({})
+      .find({ isDeleted: { $ne: 1 } })
       .sort({ createdAt: -1 })
       .limit(4)
       .toArray()

@@ -8,7 +8,9 @@ export async function GET() {
   try {
     const client = await clientPromise
     const db = client.db('beatstore')
-    const beats = await db.collection('beats').find({}).toArray()
+    const beats = await db.collection('beats')
+      .find({ isDeleted: { $ne: 1 } })
+      .toArray()
     return NextResponse.json(beats)
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch beats' }, { status: 500 })

@@ -76,6 +76,7 @@ export async function POST(request: Request) {
         premium: premiumPrice,
         exclusive: exclusivePrice
       },
+      isDeleted: 0,
       createdAt: new Date(),
       updatedAt: new Date()
     }
